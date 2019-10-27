@@ -18,9 +18,11 @@ enum DragState {
 struct Letter: View {
     @State var dragAmount = CGSize.zero
     @State var dragState = DragState.unknown
-    var onChanged: ((CGPoint, String) -> DragState)?
-    
     var text: String
+    var index: Int
+    
+    var onChanged: ((CGPoint, String) -> DragState)?
+    var onEnded: ((CGPoint, Int, String) -> Void)?
     
     var body: some View {
         Image(text)
@@ -35,7 +37,10 @@ struct Letter: View {
                         self.dragAmount = CGSize(width: $0.translation.width, height: -$0.translation.height)
                         self.dragState = self.onChanged?($0.location, self.text) ?? .unknown
                 }
-                .onEnded { _ in
+                .onEnded {
+                    if self.dragState == .good {
+                        self.onEnded?($0.location, self.index, self.text)
+                    }
                     self.dragAmount = .zero
                 }
         )
@@ -56,6 +61,6 @@ struct Letter: View {
 
 struct Letter_Previews: PreviewProvider {
     static var previews: some View {
-        Letter(text: "A")
+        Letter(text: "A", index: 0)
     }
 }

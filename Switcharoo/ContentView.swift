@@ -14,19 +14,24 @@ struct ContentView: View {
     @State var activeLetters = [String](repeating: "Blank", count: 4)
     @State var tray = [String](repeating: "Blank", count: 10)
     @State var buttonFrames = [CGRect](repeating: .zero, count: 4)
-    
+    @State private var timeRemaining = 100
+    @State private var score = 0
     
     let allowedWords = Bundle.main.words(from: "words.txt")
     let startWords = Bundle.main.words(from: "start.txt")
-    
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     var body: some View {
         VStack(spacing: 20) {
-            Image("Switcharoo")
-                .padding()
+            HStack {
+                GameNumber(text: "Time", value: timeRemaining)
+                Image("Switcharoo")
+                GameNumber(text: "Score", value: score)
+                    
+            }.padding()
             Spacer()
             HStack {
                 ForEach(0..<4) { number in
-                    Letter(text:  self.activeLetters[number])
+                    Letter(text: self.activeLetters[number], index: number)
                         .allowsHitTesting(false)
                         .overlay(
                             GeometryReader { geo in
@@ -42,7 +47,7 @@ struct ContentView: View {
             
             HStack {
                 ForEach(0..<10) { number in
-                    Letter(text: self.tray[number])
+                    Letter(text: self.tray[number], index: number, onChanged: self.letterMoved, onEnded: self.letterDropped)
                     
                 }
             }
@@ -50,6 +55,14 @@ struct ContentView: View {
         .frame(width: 1024, height: 768)
         .background(Image("Background"))
         .onAppear(perform: startGame)
+    .allowsHitTesting(timeRemaining > 0)
+        .onReceive(timer) { value in
+            if self.timeRemaining > 0 {
+                self.timeRemaining -= 1
+            }
+            
+        }
+        
     }
     
     func startGame() {
@@ -80,6 +93,17 @@ struct ContentView: View {
             return .unknown
         }
         
+    }
+    func letterDropped(location: CGPoint, trayIndex: Int, letter: String) {
+        if let match = buttonFrames.firstIndex(where: {
+            $0.contains(location)
+        }) {
+            activeLetters[match] = letter
+            tray.remove(at: trayIndex)
+            tray.append(randomLetter())
+            timeRemaining += 2
+            score += 1
+        }
     }
 }
 
