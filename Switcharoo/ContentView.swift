@@ -43,6 +43,10 @@ struct ContentView: View {
                         })
                 }
             }
+            
+            ResetButton {
+                self.resetLetters(deductPoints: true)
+            }
             Spacer()
             
             HStack {
@@ -51,11 +55,14 @@ struct ContentView: View {
                     
                 }
             }
+            Shuffletray {
+                self.tray.shuffle()
+            }
         }
         .frame(width: 1024, height: 768)
         .background(Image("Background"))
         .onAppear(perform: startGame)
-    .allowsHitTesting(timeRemaining > 0)
+        .allowsHitTesting(timeRemaining > 0)
         .onReceive(timer) { value in
             if self.timeRemaining > 0 {
                 self.timeRemaining -= 1
@@ -64,11 +71,19 @@ struct ContentView: View {
         }
         
     }
-    
     func startGame() {
+        resetLetters(deductPoints: false)
+    }
+    
+    func resetLetters(deductPoints: Bool) {
         let newWords = startWords.randomElement() ?? "CAPE"
         activeLetters = newWords.map(String.init)
         tray = (1...10).map { _ in self.randomLetter() }
+        
+        if deductPoints {
+            score -= 10
+        
+        }
     }
     
     func randomLetter() -> String {
